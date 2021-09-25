@@ -1,5 +1,6 @@
 package uz.mk.util;
 
+import com.vdurmont.emoji.EmojiParser;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
@@ -8,8 +9,9 @@ import java.util.Arrays;
 import java.util.List;
 
 public class InlineButton {
-    public static InlineKeyboardButton keyboardButton(String text, String callbackData) {
-        InlineKeyboardButton keyboardButton = new InlineKeyboardButton(text);
+    public static InlineKeyboardButton keyboardButton(String text, String callbackData, String emoji) {
+        String emojiText = EmojiParser.parseToUnicode(emoji + " " + text);
+        InlineKeyboardButton keyboardButton = new InlineKeyboardButton(emojiText);
         keyboardButton.setCallbackData(callbackData);
         return keyboardButton;
     }

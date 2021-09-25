@@ -8,12 +8,16 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import uz.mk.dto.CodeMessage;
+import uz.mk.service.FileInfoService;
 
 public class MainController extends TelegramLongPollingBot {
     private final GeneralController generalController;
+    private final FileInfoService fileInfoService;
+
 
     public MainController() {
         this.generalController = new GeneralController();
+        fileInfoService = new FileInfoService();
     }
 
 
@@ -30,37 +34,44 @@ public class MainController extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
 
+        Message message = update.getMessage();
 
-        SendMessage sendMessage = new SendMessage();
-        if (update.hasCallbackQuery()) {
-            CallbackQuery callbackQuery = update.getCallbackQuery();
+        try{
+            if (update.hasCallbackQuery()) {
+                CallbackQuery callbackQuery = update.getCallbackQuery();
 
-            String data = callbackQuery.getData();
-            Message message = callbackQuery.getMessage();
+                String data = callbackQuery.getData();
+                message = callbackQuery.getMessage();
 
-            if (data.equals("menu")) {
-                this.sendMsg(generalController.handle(data, message.getChatId(), message.getMessageId()));
+                if (data.equals("menu")) {
+                    this.sendMsg(generalController.handle(data, message.getChatId(), message.getMessageId()));
+                }
+
+            } else if (message != null) {
+                String text = message.getText();
+
+                SendMessage sendMessage = new SendMessage();
+                sendMessage.setChatId(String.valueOf(message.getChatId()));
+                Integer messageId = message.getMessageId();
+
+
+                if (text != null) {
+                    if (text.equals("/start") || text.equals("/settings") || text.equals("/help")) {
+                        this.sendMsg(generalController.handle(text, message.getChatId(), messageId));
+                    } else {
+                        this.sendMsg(sendMessage);
+                    }
+                }else {
+                    this.sendMsg(this.fileInfoService.getFileInfo(message));
+                }
+
+                //            User user = message.getFrom();
+
             }
 
-        } else {
-            Message message = update.getMessage();
-            sendMessage.setChatId(String.valueOf(message.getChatId()));
-
-            Integer messageId = message.getMessageId();
-
-            String text = message.getText();
-            User user = message.getFrom();
-
-
-            if (text.equals("/start") || text.equals("/settings") || text.equals("/help")) {
-                this.sendMsg(generalController.handle(text, message.getChatId(), messageId));
-            } else {
-                this.sendMsg(sendMessage);
-            }
-
+        }catch (Exception e){
+            e.printStackTrace();
         }
-
-
     }
 
 
@@ -80,6 +91,10 @@ public class MainController extends TelegramLongPollingBot {
                     break;
                 case EDIT:
                     execute(codeMessage.getEditMessageText());
+                    break;
+                case MESSAGE_VIDEO:
+                    execute(codeMessage.getSendMessage());
+                    execute(codeMessage.getSendVideo());
                     break;
                 default:
                     break;

@@ -2,6 +2,7 @@ package uz.mk.dto;
 
 import lombok.Data;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import uz.mk.enums.MessageType;
 
@@ -9,5 +10,6 @@ import uz.mk.enums.MessageType;
 public class CodeMessage {
     private SendMessage sendMessage;
     private EditMessageText editMessageText;
+    private SendVideo sendVideo;
     private MessageType type;
 }
