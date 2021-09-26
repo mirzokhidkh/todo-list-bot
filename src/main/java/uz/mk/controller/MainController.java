@@ -13,11 +13,13 @@ import uz.mk.service.FileInfoService;
 public class MainController extends TelegramLongPollingBot {
     private final GeneralController generalController;
     private final FileInfoService fileInfoService;
+    private final TodoController todoController;
 
 
     public MainController() {
         this.generalController = new GeneralController();
-        fileInfoService = new FileInfoService();
+        this.fileInfoService = new FileInfoService();
+        this.todoController = new TodoController();
     }
 
 
@@ -36,7 +38,7 @@ public class MainController extends TelegramLongPollingBot {
 
         Message message = update.getMessage();
 
-        try{
+        try {
             if (update.hasCallbackQuery()) {
                 CallbackQuery callbackQuery = update.getCallbackQuery();
 
@@ -45,6 +47,8 @@ public class MainController extends TelegramLongPollingBot {
 
                 if (data.equals("menu")) {
                     this.sendMsg(generalController.handle(data, message.getChatId(), message.getMessageId()));
+                } else if (data.startsWith("/todo")) {
+                    this.sendMsg(todoController.handle(data, message.getChatId(), message.getMessageId()));
                 }
 
             } else if (message != null) {
@@ -58,10 +62,13 @@ public class MainController extends TelegramLongPollingBot {
                 if (text != null) {
                     if (text.equals("/start") || text.equals("/settings") || text.equals("/help")) {
                         this.sendMsg(generalController.handle(text, message.getChatId(), messageId));
+                    } else if (todoController.getTodoItemStep().containsKey(message.getChatId())) {
+                        this.sendMsg(todoController.handle(text, message.getChatId(), messageId));
                     } else {
+                        sendMessage.setText("This command does not exist");
                         this.sendMsg(sendMessage);
                     }
-                }else {
+                } else {
                     this.sendMsg(this.fileInfoService.getFileInfo(message));
                 }
 
@@ -69,7 +76,7 @@ public class MainController extends TelegramLongPollingBot {
 
             }
 
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
