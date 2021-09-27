@@ -9,6 +9,13 @@ import java.util.Arrays;
 import java.util.List;
 
 public class InlineButton {
+
+    public static InlineKeyboardButton keyboardButton(String text, String callbackData) {
+        InlineKeyboardButton keyboardButton = new InlineKeyboardButton(text);
+        keyboardButton.setCallbackData(callbackData);
+        return keyboardButton;
+    }
+
     public static InlineKeyboardButton keyboardButton(String text, String callbackData, String emoji) {
         String emojiText = EmojiParser.parseToUnicode(emoji + " " + text);
         InlineKeyboardButton keyboardButton = new InlineKeyboardButton(emojiText);

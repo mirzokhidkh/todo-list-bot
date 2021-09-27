@@ -8,16 +8,22 @@ import uz.mk.dto.CodeMessage;
 import uz.mk.dto.TodoItem;
 import uz.mk.enums.MessageType;
 import uz.mk.enums.TodoItemType;
+import uz.mk.repository.TodoRepository;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import static uz.mk.enums.TodoItemType.CONTENT;
-import static uz.mk.enums.TodoItemType.TITLE;
+import static uz.mk.enums.TodoItemType.*;
+import static uz.mk.util.InlineButton.*;
+import static uz.mk.util.InlineButton.keyboardButton;
 
 @Data
 public class TodoController {
     private Map<Long, TodoItem> todoItemStep = new HashMap<>();
+    private final TodoRepository todoRepository = new TodoRepository();
 
     public CodeMessage handle(String text, Long chatId, Integer messageId) {
         CodeMessage codeMessage = new CodeMessage();
@@ -30,9 +36,32 @@ public class TodoController {
             String command = commandList[2];
 
             if (command.equals("list")) {
-                sendMessage.setText("List ");
-                codeMessage.setSendMessage(sendMessage);
-                codeMessage.setType(MessageType.MESSAGE);
+                EditMessageText editMessageText = new EditMessageText();
+                editMessageText.setMessageId(messageId);
+                editMessageText.setChatId(String.valueOf(chatId));
+                editMessageText.setParseMode("HTML");
+
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+                List<TodoItem> todoItemList = todoRepository.getTodoItem(chatId);
+
+                StringBuilder stringBuilder = new StringBuilder();
+                int count = 1;
+                for (TodoItem todoItem : todoItemList) {
+                    stringBuilder.append("<b>").append(count).append("</b>");
+                    stringBuilder.append("\n");
+                    stringBuilder.append(todoItem.getTitle());
+                    stringBuilder.append("\n");
+                    stringBuilder.append(todoItem.getContent());
+                    stringBuilder.append("\n");
+                    stringBuilder.append(simpleDateFormat.format(todoItem.getCreatedDate()));
+                    stringBuilder.append(" /todo_edit_").append(todoItem.getId());
+                    stringBuilder.append("\n\n");
+                    count++;
+                }
+
+                editMessageText.setText(stringBuilder.toString());
+                codeMessage.setEditMessageText(editMessageText);
+                codeMessage.setType(MessageType.EDIT);
             } else if (command.equals("create")) {
                 EditMessageText editMessageText = new EditMessageText();
                 editMessageText.setChatId(String.valueOf(chatId));
@@ -68,9 +97,22 @@ public class TodoController {
                 todoItem.setType(CONTENT);
             } else if (todoItem.getType().equals(CONTENT)) {
                 todoItem.setContent(text);
-                sendMessage.setText("*Title* : " + todoItem.getTitle() + "\n" + "*Content*: " + todoItem.getContent()+"\n" +
+                todoItem.setCreatedDate(new Date());
+                todoItem.setType(FINISHED);
+                int n = todoRepository.add(chatId, todoItem);
+                todoItemStep.remove(chatId);
+
+                sendMessage.setText("ItemCount : " + n + "\n*Title* : " + todoItem.getTitle() + "\n" + "*Content*: " + todoItem.getContent() + "\n" +
                         "Creating Todo finished");
+
+                sendMessage.setReplyMarkup(
+                        keyboardMarkup(
+                                rowCollection(
+                                        row(keyboardButton("ToDo List", "/todo/list", ":clipboard:")),
+                                        row(keyboardButton("Go to Menu", "menu"))
+                                )));
             }
+
 
         }
 
