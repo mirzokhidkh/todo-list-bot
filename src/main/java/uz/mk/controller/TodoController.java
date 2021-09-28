@@ -4,6 +4,7 @@ import lombok.Data;
 import org.aopalliance.reflect.Code;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import uz.mk.dto.CodeMessage;
 import uz.mk.dto.TodoItem;
 import uz.mk.enums.MessageType;
@@ -16,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static uz.mk.enums.MessageType.EDIT;
 import static uz.mk.enums.MessageType.MESSAGE;
 import static uz.mk.enums.TodoItemType.*;
 import static uz.mk.util.InlineButton.*;
@@ -53,8 +55,7 @@ public class TodoController {
                                     rowCollection(
                                             row(keyboardButton("Go to Menu", "menu"))
                                     )));
-                }
-                else {
+                } else {
 
                     StringBuilder stringBuilder = new StringBuilder();
                     int count = 1;
@@ -98,6 +99,40 @@ public class TodoController {
                 codeMessage.setEditMessageText(editMessageText);
                 codeMessage.setType(MessageType.EDIT);
 
+            } else if (command.equals("update")) {
+                command = commandList[3];
+                String id = commandList[4];
+
+                EditMessageText editMessageText = new EditMessageText();
+
+                TodoItem todoItem = this.todoRepository.getItem(chatId, id);
+                if (todoItem == null) {
+                    editMessageText.setText("todo Id does not exists");
+                } else {
+                    editMessageText.setChatId(String.valueOf(chatId));
+                    editMessageText.setMessageId(messageId);
+                    editMessageText.setText("Send *Title*");
+                    editMessageText.setParseMode("MarkdownV2");
+
+                    if (command.equals("title")) {
+                        editMessageText.setText("'Current Title' : " + todoItem.getTitle() + "\nPlease send new Title");
+
+                        codeMessage.setEditMessageText(editMessageText);
+                        codeMessage.setType(EDIT);
+                        todoItem.setType(UPDATE_TITLE);
+                        this.todoItemStep.put(chatId, todoItem);
+
+                    } else if (command.equals("content")) {
+                        editMessageText.setText("'Current Content' : " + todoItem.getContent() + "\nPlease send new Content");
+
+                        codeMessage.setEditMessageText(editMessageText);
+                        codeMessage.setType(EDIT);
+                        todoItem.setType(UPDATE_CONTENT);
+                        this.todoItemStep.put(chatId, todoItem);
+                    }
+                }
+
+
             }
 
             return codeMessage;
@@ -106,31 +141,19 @@ public class TodoController {
 
         if (text.startsWith("/todo_")) {
             String todoId = text.split("/todo_edit_")[1];
-            TodoItem todoItem = todoRepository.getItem(chatId, todoId);
+            TodoItem todoItem = this.todoRepository.getItem(chatId, todoId);
             if (todoItem == null) {
                 sendMessage.setText("todo Id does not exists");
             } else {
                 sendMessage.setText(todoItem.getTitle() + "\n" + todoItem.getContent() + "\n" +
                         "_" + simpleDateFormat.format(todoItem.getCreatedDate()) + "_");
-
-                sendMessage.setReplyMarkup(
-                        keyboardMarkup(
-                                rowCollection(
-                                        row(
-                                                keyboardButton("Update Title", "/todo/update/title" + todoId),
-                                                keyboardButton("Update Content", "/todo/update/content" + todoId),
-                                                keyboardButton("Delete", "/todo/delete/content" + todoId, ":x:")
-                                        ),
-                                        row(
-                                                keyboardButton("ToDo List", "/todo/list", ":clipboard:")
-                                        )
-                                )));
-
+                sendMessage.setReplyMarkup(getTodoItemKeyboard(todoId));
                 sendMessage.setParseMode("Markdown");
             }
             codeMessage.setSendMessage(sendMessage);
             codeMessage.setType(MESSAGE);
         }
+
 
         if (this.todoItemStep.containsKey(chatId)) {
             TodoItem todoItem = this.todoItemStep.get(chatId);
@@ -148,7 +171,7 @@ public class TodoController {
                 todoItem.setCreatedDate(new Date());
                 todoItem.setType(FINISHED);
                 int n = todoRepository.add(chatId, todoItem);
-                todoItemStep.remove(chatId);
+                this.todoItemStep.remove(chatId);
 
                 sendMessage.setText("ItemCount : " + n + "\n*Title* : " + todoItem.getTitle() + "\n" + "*Content*: " + todoItem.getContent() + "\n" +
                         "Creating Todo finished");
@@ -159,6 +182,16 @@ public class TodoController {
                                         row(keyboardButton("ToDo List", "/todo/list", ":clipboard:")),
                                         row(keyboardButton("Go to Menu", "menu"))
                                 )));
+            } else if (todoItem.getType().equals(UPDATE_TITLE)) {
+                todoItem.setTitle(text);
+                this.todoItemStep.remove(chatId);
+                sendMessage.setText("'Title' :  " + todoItem.getTitle() + "\n" + "'Content : '" + todoItem.getContent());
+                sendMessage.setReplyMarkup(getTodoItemKeyboard(todoItem.getId()));
+            } else if (todoItem.getType().equals(UPDATE_CONTENT)) {
+                todoItem.setTitle(text);
+                this.todoItemStep.remove(chatId);
+                sendMessage.setText("'Title' :  " + todoItem.getTitle() + "\n" + "'Content : '" + todoItem.getContent());
+                sendMessage.setReplyMarkup(getTodoItemKeyboard(todoItem.getId()));
             }
 
 
@@ -166,5 +199,19 @@ public class TodoController {
 
 
         return codeMessage;
+    }
+
+    private InlineKeyboardMarkup getTodoItemKeyboard(String todoId) {
+        return keyboardMarkup(
+                rowCollection(
+                        row(
+                                keyboardButton("Update Title", "/todo/update/title" + todoId),
+                                keyboardButton("Update Content", "/todo/update/content" + todoId),
+                                keyboardButton("Delete", "/todo/delete/" + todoId, ":x:")
+                        ),
+                        row(
+                                keyboardButton("ToDo List", "/todo/list", ":clipboard:")
+                        )
+                ));
     }
 }
