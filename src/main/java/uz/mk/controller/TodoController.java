@@ -188,7 +188,7 @@ public class TodoController {
                 sendMessage.setText("'Title' :  " + todoItem.getTitle() + "\n" + "'Content : '" + todoItem.getContent());
                 sendMessage.setReplyMarkup(getTodoItemKeyboard(todoItem.getId()));
             } else if (todoItem.getType().equals(UPDATE_CONTENT)) {
-                todoItem.setTitle(text);
+                todoItem.setContent(text);
                 this.todoItemStep.remove(chatId);
                 sendMessage.setText("'Title' :  " + todoItem.getTitle() + "\n" + "'Content : '" + todoItem.getContent());
                 sendMessage.setReplyMarkup(getTodoItemKeyboard(todoItem.getId()));
@@ -205,8 +205,8 @@ public class TodoController {
         return keyboardMarkup(
                 rowCollection(
                         row(
-                                keyboardButton("Update Title", "/todo/update/title" + todoId),
-                                keyboardButton("Update Content", "/todo/update/content" + todoId),
+                                keyboardButton("Update Title", "/todo/update/title/" + todoId),
+                                keyboardButton("Update Content", "/todo/update/content/" + todoId),
                                 keyboardButton("Delete", "/todo/delete/" + todoId, ":x:")
                         ),
                         row(
