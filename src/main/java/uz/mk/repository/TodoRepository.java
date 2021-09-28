@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 public class TodoRepository {
-    private Map<Long, List> todoMap = new HashMap<>();
+    private Map<Long, List<TodoItem>> todoMap = new HashMap<>();
 
     public int add(Long userId, TodoItem todoItem) {
         if (todoMap.containsKey(userId)) {
@@ -25,6 +25,18 @@ public class TodoRepository {
     public List<TodoItem> getTodoItem(Long userId) {
         if (todoMap.containsKey(userId)) {
             return todoMap.get(userId);
+        }
+        return null;
+    }
+
+    public TodoItem getItem(Long userId, String id) {
+        if (todoMap.containsKey(userId)) {
+            List<TodoItem> list = todoMap.get(userId);
+            for (TodoItem todoItem : list) {
+                if (todoItem.getId().equals(id)) {
+                    return todoItem;
+                }
+            }
         }
         return null;
     }

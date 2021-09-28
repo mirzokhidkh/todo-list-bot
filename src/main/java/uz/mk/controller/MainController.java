@@ -62,7 +62,7 @@ public class MainController extends TelegramLongPollingBot {
                 if (text != null) {
                     if (text.equals("/start") || text.equals("/settings") || text.equals("/help")) {
                         this.sendMsg(generalController.handle(text, message.getChatId(), messageId));
-                    } else if (todoController.getTodoItemStep().containsKey(message.getChatId())) {
+                    } else if (todoController.getTodoItemStep().containsKey(message.getChatId()) || text.startsWith("/todo_")) {
                         this.sendMsg(todoController.handle(text, message.getChatId(), messageId));
                     } else {
                         sendMessage.setText("This command does not exist");
