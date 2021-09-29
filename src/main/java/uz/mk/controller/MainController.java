@@ -48,7 +48,7 @@ public class MainController extends TelegramLongPollingBot {
                 User user = callbackQuery.getFrom();
                 message = callbackQuery.getMessage();
 
-                LOGGER.info("messageId: " + message.getMessageId() + "  User_Name  " + user.getFirstName() + "  message: " + data);
+                LOGGER.info("messageId: " + message.getMessageId() + "  User_Name: " + user.getFirstName() + "  message: " + data);
 
 
                 if (data.equals("menu")) {
@@ -63,7 +63,6 @@ public class MainController extends TelegramLongPollingBot {
                 SendMessage sendMessage = new SendMessage();
                 sendMessage.setChatId(String.valueOf(message.getChatId()));
                 Integer messageId = message.getMessageId();
-
 
                 if (text != null) {
                     if (text.equals("/start") || text.equals("/settings") || text.equals("/help")) {
