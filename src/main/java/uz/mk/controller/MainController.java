@@ -1,5 +1,7 @@
 package uz.mk.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
@@ -11,6 +13,7 @@ import uz.mk.dto.CodeMessage;
 import uz.mk.service.FileInfoService;
 
 public class MainController extends TelegramLongPollingBot {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MainController.class);
     private final GeneralController generalController;
     private final FileInfoService fileInfoService;
     private final TodoController todoController;
@@ -41,9 +44,12 @@ public class MainController extends TelegramLongPollingBot {
         try {
             if (update.hasCallbackQuery()) {
                 CallbackQuery callbackQuery = update.getCallbackQuery();
-
                 String data = callbackQuery.getData();
+                User user = callbackQuery.getFrom();
                 message = callbackQuery.getMessage();
+
+                LOGGER.info("messageId: " + message.getMessageId() + "  User_Name  " + user.getFirstName() + "  message: " + data);
+
 
                 if (data.equals("menu")) {
                     this.sendMsg(generalController.handle(data, message.getChatId(), message.getMessageId()));
@@ -72,11 +78,10 @@ public class MainController extends TelegramLongPollingBot {
                     this.sendMsg(this.fileInfoService.getFileInfo(message));
                 }
 
-                //            User user = message.getFrom();
-
             }
 
         } catch (Exception e) {
+            LOGGER.error(e.getMessage());
             e.printStackTrace();
         }
     }

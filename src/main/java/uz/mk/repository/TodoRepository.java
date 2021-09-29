@@ -40,4 +40,14 @@ public class TodoRepository {
         }
         return null;
     }
+
+    public boolean delete(Long userId, String id) {
+        TodoItem todoItem = this.getItem(userId, id);
+        if (todoItem != null) {
+            this.todoMap.get(userId).remove(todoItem);
+            return true;
+        }
+
+        return false;
+    }
 }

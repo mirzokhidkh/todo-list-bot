@@ -40,100 +40,163 @@ public class TodoController {
             String[] commandList = text.split("/");
             String command = commandList[2];
 
-            if (command.equals("list")) {
-                EditMessageText editMessageText = new EditMessageText();
-                editMessageText.setMessageId(messageId);
-                editMessageText.setChatId(String.valueOf(chatId));
-                editMessageText.setParseMode("HTML");
+            switch (command) {
+                case "list":
+                    EditMessageText editMessageText = new EditMessageText();
+                    editMessageText.setMessageId(messageId);
+                    editMessageText.setChatId(String.valueOf(chatId));
+                    editMessageText.setParseMode("HTML");
 
-                List<TodoItem> todoItemList = todoRepository.getTodoItem(chatId);
+                    List<TodoItem> todoItemList = todoRepository.getTodoItem(chatId);
 
-                if (todoItemList == null) {
-                    editMessageText.setText("The list is empty");
-                    editMessageText.setReplyMarkup(
-                            keyboardMarkup(
-                                    rowCollection(
-                                            row(keyboardButton("Go to Menu", "menu"))
-                                    )));
-                } else {
+                    if (todoItemList == null || todoItemList.isEmpty()) {
+                        editMessageText.setText("You do not have any todo items");
+                        editMessageText.setReplyMarkup(
+                                keyboardMarkup(
+                                        rowCollection(
+                                                row(keyboardButton("Go to Menu", "menu"))
+                                        )));
+                    } else {
 
-                    StringBuilder stringBuilder = new StringBuilder();
-                    int count = 1;
-                    for (TodoItem todoItem : todoItemList) {
-                        stringBuilder.append("<b>").append(count).append("</b>");
-                        stringBuilder.append("\n");
-                        stringBuilder.append(todoItem.getTitle());
-                        stringBuilder.append("\n");
-                        stringBuilder.append(todoItem.getContent());
-                        stringBuilder.append("\n");
-                        stringBuilder.append(simpleDateFormat.format(todoItem.getCreatedDate()));
-                        stringBuilder.append(" /todo_edit_").append(todoItem.getId());
-                        stringBuilder.append("\n\n");
-                        count++;
+                        StringBuilder stringBuilder = new StringBuilder();
+                        int count = 1;
+                        for (TodoItem todoItem : todoItemList) {
+                            stringBuilder.append("<b>").append(count).append("</b>");
+                            stringBuilder.append("\n");
+                            stringBuilder.append(todoItem.getTitle());
+                            stringBuilder.append("\n");
+                            stringBuilder.append(todoItem.getContent());
+                            stringBuilder.append("\n");
+                            stringBuilder.append(simpleDateFormat.format(todoItem.getCreatedDate()));
+                            stringBuilder.append(" /todo_edit_").append(todoItem.getId());
+                            stringBuilder.append("\n\n");
+                            count++;
+                        }
+
+                        editMessageText.setReplyMarkup(
+                                keyboardMarkup(
+                                        rowCollection(
+                                                row(keyboardButton("Go to Menu", "menu"))
+                                        )));
+
+                        editMessageText.setText(stringBuilder.toString());
                     }
 
-                    editMessageText.setReplyMarkup(
-                            keyboardMarkup(
-                                    rowCollection(
-                                            row(keyboardButton("Go to Menu", "menu"))
-                                    )));
-
-                    editMessageText.setText(stringBuilder.toString());
-                }
-
-                codeMessage.setEditMessageText(editMessageText);
-                codeMessage.setType(MessageType.EDIT);
-            } else if (command.equals("create")) {
-                EditMessageText editMessageText = new EditMessageText();
-                editMessageText.setChatId(String.valueOf(chatId));
-                editMessageText.setText("Send *Title*");
-                editMessageText.setParseMode("MarkdownV2");
-                editMessageText.setMessageId(messageId);
-
-                TodoItem todoItem = new TodoItem();
-                todoItem.setId(messageId.toString());
-                todoItem.setUserId(chatId);
-                todoItem.setType(TITLE);
-                this.todoItemStep.put(chatId, todoItem);
-
-                codeMessage.setEditMessageText(editMessageText);
-                codeMessage.setType(MessageType.EDIT);
-
-            } else if (command.equals("update")) {
-                command = commandList[3];
-                String id = commandList[4];
-
-                EditMessageText editMessageText = new EditMessageText();
-
-                TodoItem todoItem = this.todoRepository.getItem(chatId, id);
-                if (todoItem == null) {
-                    editMessageText.setText("todo Id does not exists");
-                } else {
+                    codeMessage.setEditMessageText(editMessageText);
+                    codeMessage.setType(MessageType.EDIT);
+                    break;
+                case "create":
+                    editMessageText = new EditMessageText();
                     editMessageText.setChatId(String.valueOf(chatId));
-                    editMessageText.setMessageId(messageId);
                     editMessageText.setText("Send *Title*");
                     editMessageText.setParseMode("MarkdownV2");
+                    editMessageText.setMessageId(messageId);
 
-                    if (command.equals("title")) {
-                        editMessageText.setText("'Current Title' : " + todoItem.getTitle() + "\nPlease send new Title");
+                    TodoItem todoItem = new TodoItem();
+                    todoItem.setId(messageId.toString());
+                    todoItem.setUserId(chatId);
+                    todoItem.setType(TITLE);
+                    this.todoItemStep.put(chatId, todoItem);
 
-                        codeMessage.setEditMessageText(editMessageText);
-                        codeMessage.setType(EDIT);
-                        todoItem.setType(UPDATE_TITLE);
-                        this.todoItemStep.put(chatId, todoItem);
+                    codeMessage.setEditMessageText(editMessageText);
+                    codeMessage.setType(MessageType.EDIT);
+                    break;
+                case "update":
+                    command = commandList[3];
+                    String id = commandList[4];
 
-                    } else if (command.equals("content")) {
-                        editMessageText.setText("'Current Content' : " + todoItem.getContent() + "\nPlease send new Content");
+                    editMessageText = new EditMessageText();
 
-                        codeMessage.setEditMessageText(editMessageText);
-                        codeMessage.setType(EDIT);
-                        todoItem.setType(UPDATE_CONTENT);
-                        this.todoItemStep.put(chatId, todoItem);
+                    todoItem = this.todoRepository.getItem(chatId, id);
+                    if (todoItem == null) {
+                        editMessageText.setText("todo Id does not exists");
+                    } else {
+                        editMessageText.setChatId(String.valueOf(chatId));
+                        editMessageText.setMessageId(messageId);
+                        editMessageText.setText("Send *Title*");
+                        editMessageText.setParseMode("MarkdownV2");
+
+                        if (command.equals("title")) {
+                            editMessageText.setText("'Current Title' : " + todoItem.getTitle() + "\nPlease send new Title");
+
+                            editMessageText.setReplyMarkup(
+                                    keyboardMarkup(
+                                            rowCollection(
+                                                    row(keyboardButton("Cancel", "/todo/cancel"))
+                                            )));
+
+                            codeMessage.setEditMessageText(editMessageText);
+                            codeMessage.setType(EDIT);
+                            todoItem.setType(UPDATE_TITLE);
+                            this.todoItemStep.put(chatId, todoItem);
+
+                        } else if (command.equals("content")) {
+                            editMessageText.setText("'Current Content' : " + todoItem.getContent() + "\nPlease send new Content");
+
+                            codeMessage.setEditMessageText(editMessageText);
+                            codeMessage.setType(EDIT);
+                            todoItem.setType(UPDATE_CONTENT);
+                            this.todoItemStep.put(chatId, todoItem);
+                        }
                     }
-                }
+
+                    break;
+                case "cancel":
+                    this.todoItemStep.remove(chatId);
+                    editMessageText = new EditMessageText();
+                    editMessageText.setMessageId(messageId);
+                    editMessageText.setChatId(String.valueOf(chatId));
+                    editMessageText.setText("Update was canceled");
+
+                    editMessageText.setReplyMarkup(
+                            keyboardMarkup(
+                                    rowCollection(
+                                            row(keyboardButton("ToDo List", "/todo/list", ":clipboard:")),
+                                            row(keyboardButton("Go to Menu", "menu"))
+                                    )));
+
+                    codeMessage.setEditMessageText(editMessageText);
+                    codeMessage.setType(EDIT);
+                    break;
+                case "delete":
+                    id = commandList[3];
+
+                    editMessageText = new EditMessageText();
+                    editMessageText.setMessageId(messageId);
+                    editMessageText.setChatId(String.valueOf(chatId));
+
+                    boolean result = this.todoRepository.delete(chatId, id);
+                    if (result) {
+                        editMessageText.setText("Todo was canceled");
+                    } else {
+                        editMessageText.setText("Error");
+                    }
 
 
+                    editMessageText.setReplyMarkup(
+                            keyboardMarkup(
+                                    rowCollection(
+                                            row(keyboardButton("ToDo List", "/todo/list", ":clipboard:")),
+                                            row(keyboardButton("Go to Menu", "menu"))
+                                    )));
+                    codeMessage.setEditMessageText(editMessageText);
+                    codeMessage.setType(EDIT);
+                    break;
             }
+
+//            if (command.equals("list")) {
+//
+//            } else if (command.equals("create")) {
+//
+//
+//            } else if (command.equals("update")) {
+//
+//
+//            } else if (command.equals("cancel")) {
+//
+//            } else if (command.equals("delete")) {
+//
+//            }
 
             return codeMessage;
         }
