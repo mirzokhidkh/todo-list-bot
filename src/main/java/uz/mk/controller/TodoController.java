@@ -159,7 +159,7 @@ public class TodoController {
             String todoId = text.split("/todo_edit_")[1];
             TodoItem todoItem = this.todoRepository.getItem(chatId, todoId);
             if (todoItem == null) {
-                 sendMessage.setText("Todo Id does not exists");
+                sendMessage.setText("Todo Id does not exists");
             } else {
                 sendMessage.setText(todoItem.getTitle() + "\n" + todoItem.getContent() + "\n" +
                         "_" + simpleDateFormat.format(todoItem.getCreatedDate()) + "_");
